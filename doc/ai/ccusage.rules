@@ -1,6 +1,0 @@
-# Convert csv from ccusage to ccusage.journal (see `just ai ccusagej-regen`).
-
-skip     1
-fields   date,inputTokens,outputTokens,cacheCreationTokens,cacheReadTokens,totalTokens,totalCost
-account1 (ai)
-amount1  %outputTokens opus_output_tokens @@ $%totalCost

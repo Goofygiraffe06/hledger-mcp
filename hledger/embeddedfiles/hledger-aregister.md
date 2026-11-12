@@ -1,1 +1,0 @@
-../../doc/tldr/hledger-aregister.md

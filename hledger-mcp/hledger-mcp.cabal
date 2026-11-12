@@ -1,0 +1,24 @@
+cabal-version:      3.0
+name:               hledger-mcp
+version:            0.1.0.0
+synopsis:           A small MCP server backed directly by hledger-lib
+license:            GPL-3.0-or-later
+build-type:         Simple
+
+executable hledger-mcp
+  main-is:          Main.hs
+  hs-source-dirs:   app
+  default-language: GHC2021
+  ghc-options:      -Wall -Wcompat -O1
+  build-depends:
+      aeson >=2.2 && <2.4
+    , base >=4.18 && <4.23
+    , bytestring
+    , containers
+    , directory
+    , filepath
+    , hledger-lib
+    , mtl
+    , text
+    , time
+    , transformers

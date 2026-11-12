@@ -1,4 +1,0 @@
-skip 2
-date %1
-amount %2
-decimal-mark badmark

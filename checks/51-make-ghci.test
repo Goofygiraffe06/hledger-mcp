@@ -1,4 +1,0 @@
-# hledger+hledger-lib GHCI prompt works
-echo :q | make ghci | tail
->>> /Ok, modules loaded/
->>>= 0

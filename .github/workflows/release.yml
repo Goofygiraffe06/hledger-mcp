@@ -1,109 +1,75 @@
-# ACTION: Creates/updates a draft github release for VERSION, attaching release notes
-# and the binaries from the binaries-* workflow runs built from the VERSION tag's commit,
-# all without the binaries leaving github's servers.
-# TRIGGER: manual (workflow_dispatch), normally via `just ghrel` on the release branch,
-# after release tags are pushed and the binaries-* workflows have succeeded for the tagged commit.
-# Dispatch it on the release branch (--ref), so that doc/ghrelnotes comes from that branch.
-
-name: release
+name: Release binaries
 
 on:
+  push:
+    tags: ["v*"]
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Release version / tag name (eg 1.53)'
-        required: true
+
+permissions:
+  contents: write
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      actions: read
-
+  build-unix:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            target: linux-x86_64
+            deployment_target: ""
+          - runner: ubuntu-22.04-arm
+            target: linux-arm64
+            deployment_target: ""
+          - runner: macos-26
+            target: macos-arm64
+            deployment_target: "13.0"
+          - runner: macos-26-intel
+            target: macos-x86_64
+            deployment_target: "13.0"
+    runs-on: ${{ matrix.runner }}
+    env:
+      MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
     steps:
+      - uses: actions/checkout@v4
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: "9.14.1"
+          cabal-version: "3.18.2.0"
+      - run: cabal update
+      - run: cabal build hledger-mcp
+      - run: ./hledger-mcp/test/smoke.sh
+      - run: ./scripts/package-unix.sh "${{ matrix.target }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: release/*.tar.gz
 
-    - name: Checkout repository
-      uses: actions/checkout@v7
+  build-windows:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: "9.14.1"
+          cabal-version: "3.18.2.0"
+      - run: cabal update
+      - run: cabal build hledger-mcp
+      - shell: pwsh
+        run: ./scripts/package-windows.ps1 -Target "windows-x86_64"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-x86_64
+          path: release/*.zip
 
-    - name: Look up the release tag's commit
-      id: tagcommit
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        sha=$(gh api "repos/$GITHUB_REPOSITORY/commits/${{ inputs.version }}" --jq .sha)
-        echo "release tag ${{ inputs.version }} points to $sha"
-        echo "sha=$sha" >> "$GITHUB_OUTPUT"
-
-    # The download steps use the commit: filter to select each workflow's run
-    # built from the tagged commit, failing if there isn't a successful one.
-    # https://github.com/dawidd6/action-download-artifact v3.1.4,
-    # unverified so needs to be whitelisted in repo settings.
-
-    - name: Get artifact from the binaries-windows-x64 run for the tagged commit
-      uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe
-      with:
-        workflow: binaries-windows-x64.yml
-        workflow_conclusion: success
-        commit: ${{ steps.tagcommit.outputs.sha }}
-        allow_forks: false
-        path: artifacts
-        # the windows artifact is just zipped, no need to repack
-        skip_unpack: true
-
-    - name: Get artifact from the binaries-linux-x64 run for the tagged commit
-      uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe
-      with:
-        workflow: binaries-linux-x64.yml
-        workflow_conclusion: success
-        commit: ${{ steps.tagcommit.outputs.sha }}
-        allow_forks: false
-        path: artifacts
-
-    - name: Get artifact from the binaries-mac-arm64 run for the tagged commit
-      uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe
-      with:
-        workflow: binaries-mac-arm64.yml
-        workflow_conclusion: success
-        commit: ${{ steps.tagcommit.outputs.sha }}
-        allow_forks: false
-        path: artifacts
-
-    - name: Get artifact from the binaries-mac-x64 run for the tagged commit
-      uses: dawidd6/action-download-artifact@09f2f74827fd3a8607589e5ad7f9398816f540fe
-      with:
-        workflow: binaries-mac-x64.yml
-        workflow_conclusion: success
-        commit: ${{ steps.tagcommit.outputs.sha }}
-        allow_forks: false
-        path: artifacts
-
-    # The unix files were
-    # 1. tarred to protect their executable permissions,
-    # 2. mandatorily zipped by actions/upload-artifact,
-    # 3. unzipped by dawidd6/action-download-artifact.
-    # Now we 4. gzip them, to be more unix-standard.
-    - name: Repack unix artifacts with gz
-      shell: bash
-      run: |
-        cd artifacts
-        mv */*.tar .
-        gzip *.tar
-        ls -lRFh .
-
-    - name: Generate github release notes
-      run: |
-        doc/ghrelnotes ${{ inputs.version }} >ghrelnotes.md
-
-    - name: Create/update draft release
-      uses: softprops/action-gh-release@69320dbe05506a9a39fc8ae11030b214ec2d1f87  # https://github.com/softprops/action-gh-release 2.0.5
-      with:
-        tag_name: ${{ inputs.version }}
-        name: ${{ inputs.version }}
-        body_path: ghrelnotes.md
-        files: |
-          artifacts/*.zip
-          artifacts/*.tar.gz
-        fail_on_unmatched_files: true
-        draft: true
-        prerelease: ${{ contains(inputs.version, '.99.') }}
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build-unix, build-windows]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" artifacts/* --generate-notes --verify-tag

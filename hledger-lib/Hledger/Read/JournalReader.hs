@@ -5,7 +5,7 @@
 
 A reader for hledger's journal file format
 (<http://hledger.org/hledger.html#the-journal-file>).  hledger's journal
-format is a compatible subset of c++ ledger's
+  format is a compatible subset of c++ ledger's
 (<http://ledger-cli.org/3.0/doc/ledger3.html#Journal-Format>), so this
 reader should handle many ledger files as well. Example:
 
@@ -15,9 +15,8 @@ reader should handle many ledger files as well. Example:
     assets:cash
 @
 
-Journal format supports the include directive which can read files in
-other formats, so the other file format readers need to be importable
-and invocable here.
+This MCP-focused fork keeps journal-format includes, while intentionally
+dropping the CSV, timeclock, and timedot reader dispatch used by the CLI.
 
 Some important parts of journal parsing are therefore kept in
 Hledger.Read.Common, to avoid import cycles.
@@ -107,10 +106,6 @@ import Hledger.Query (parseQuery, querySplitRowTerms)
 import Hledger.Read.Common
 import Hledger.Utils
 
-import Hledger.Read.CsvReader qualified as CsvReader (reader)
-import Hledger.Read.RulesReader qualified as RulesReader (reader)
-import Hledger.Read.TimeclockReader qualified as TimeclockReader (reader)
-import Hledger.Read.TimedotReader qualified as TimedotReader (reader)
 import Data.Function ((&))
 
 --- ** doctest setup
@@ -142,16 +137,7 @@ rejp = runErroringJournalParser
 
 -- The available journal readers, each one handling a particular data format.
 readers' :: MonadIO m => [Reader m]
-readers' = [
-  reader
- ,TimeclockReader.reader
- ,TimedotReader.reader
- ,RulesReader.reader
- ,CsvReader.reader Csv
- ,CsvReader.reader Tsv
- ,CsvReader.reader Ssv
---  ,LedgerReader.reader
- ]
+readers' = [reader]
 
 readerNames :: [String]
 readerNames = map (show . rFormat) (readers'::[Reader IO])

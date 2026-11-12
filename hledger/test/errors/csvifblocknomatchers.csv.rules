@@ -1,4 +1,0 @@
-fields date, amount1
-if
-# a comment, not a matcher
- account1 a

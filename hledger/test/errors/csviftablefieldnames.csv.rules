@@ -1,2 +1,0 @@
-# ifs table not using valid CSV field names.
-if,date,nosuchfield,description

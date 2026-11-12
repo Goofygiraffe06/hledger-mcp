@@ -1,5 +1,0 @@
-# Convert summary csv (monthly aregister csv) for import to ai.journal.
-
-skip     1
-fields   _txnidx,date,code,description,account1,amount1,_total
-account1 (%account1)

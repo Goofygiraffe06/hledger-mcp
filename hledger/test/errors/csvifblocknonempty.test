@@ -1,9 +1,0 @@
-$ hledger check -f  csvifblocknonempty.csv
->2 /hledger: Error: .*csvifblocknonempty.csv.rules:2:1:
-  \|
-2 \| if foo
-  \| \^
-start of if rule found, but no assignment rules afterward
-\(assignment rules in an if rule should be indented\)
-/
->= 1

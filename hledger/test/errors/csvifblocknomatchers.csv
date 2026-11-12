@@ -1,3 +1,0 @@
-#!/usr/bin/env -S hledger check -f 
-# Rules have a conditional block with no matchers, only a comment line.
-2022-01-01,1

@@ -1,9 +1,9 @@
-# hledger-lib
+# hledger-lib (journal core)
 
-A reusable library containing hledger's core functionality.
-This is used by most hledger* packages so that they support the same
-common file formats, command line options, reports etc.
+This directory preserves the upstream hledger accounting engine used by the MCP
+server: data types, native journal parsing and includes, balancing, validation,
+queries, lot handling, and balance/register reports.
 
-See also:
-the [project README](https://hledger.org/README.html)
-and [home page](https://hledger.org).
+CLI, TUI, web, alternate input readers, and output renderers are intentionally not
+part of this fork's build or source tree. Upstream is maintained at
+[hledger.org](https://hledger.org) under GPL-3.0-or-later.

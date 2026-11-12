@@ -1,5 +1,0 @@
-# cabal repl works for hledger-lib
-echo :q | make repl-lib | tail
->>> /Ok, modules loaded: Hledger, /
->>>2
->>>= 0

@@ -1,2 +1,0 @@
-; For commodity-aliases.test: declares Z as an alias of X.
-commodity X  ; alias: 10 Z

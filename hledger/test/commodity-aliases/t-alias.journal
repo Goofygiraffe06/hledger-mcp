@@ -1,2 +1,0 @@
-; For commodity-aliases.test: declares Mt as an alias of another commodity.
-commodity t  ; alias: 1e-6 Mt
