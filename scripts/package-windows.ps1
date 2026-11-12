@@ -1,7 +1,12 @@
 param([Parameter(Mandatory=$true)][string]$Target)
 $ErrorActionPreference = "Stop"
 $Repo = Split-Path -Parent $PSScriptRoot
-$Binary = (Set-Location $Repo; cabal list-bin hledger-mcp)
+Push-Location $Repo
+try {
+  $Binary = (cabal list-bin hledger-mcp).Trim()
+} finally {
+  Pop-Location
+}
 $Stage = Join-Path $Repo "release/hledger-mcp-$Target"
 $Archive = Join-Path $Repo "release/hledger-mcp-$Target.zip"
 Remove-Item $Stage -Recurse -Force -ErrorAction SilentlyContinue
