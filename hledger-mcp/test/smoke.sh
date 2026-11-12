@@ -20,15 +20,15 @@ trap 'rm -rf "$workspace"; rm -f "$responses"' EXIT
 {"jsonrpc":"2.0","id":10,"method":"tools/call","params":{"name":"balance","arguments":{"query":"expenses"}}}
 EOF
 
-jq -e 'select(.id == 1) | .result.protocolVersion == "2025-06-18"' "$responses" >/dev/null
-jq -e 'select(.id == 2) | .result.supportedVersions == ["2026-07-28"]' "$responses" >/dev/null
-jq -e 'select(.id == 3) | .result.isError == false and (.result.structuredContent.created | length) == 4' "$responses" >/dev/null
-jq -e 'select(.id == 4) | .result.isError == false' "$responses" >/dev/null
-jq -e 'select(.id == 6) | .result.structuredContent.file | endswith("transactions/2025.journal")' "$responses" >/dev/null
-jq -e 'select(.id == 7) | .result.structuredContent.file | endswith("transactions/2026.journal")' "$responses" >/dev/null
-jq -e 'select(.id == 8) | .result.isError == true' "$responses" >/dev/null
-jq -e 'select(.id == 9) | .result.structuredContent.transactions == 2 and (.result.structuredContent.files | length) == 5' "$responses" >/dev/null
-jq -e 'select(.id == 10) | .result.structuredContent.rows[0].balance == "INR 1500"' "$responses" >/dev/null
+jq -se 'any(.[]; .id == 1 and .result.protocolVersion == "2025-06-18")' "$responses" >/dev/null
+jq -se 'any(.[]; .id == 2 and .result.supportedVersions == ["2026-07-28"])' "$responses" >/dev/null
+jq -se 'any(.[]; .id == 3 and .result.isError == false and (.result.structuredContent.created | length) == 4)' "$responses" >/dev/null
+jq -se 'any(.[]; .id == 4 and .result.isError == false)' "$responses" >/dev/null
+jq -se 'any(.[]; .id == 6 and (.result.structuredContent.file | endswith("transactions/2025.journal")))' "$responses" >/dev/null
+jq -se 'any(.[]; .id == 7 and (.result.structuredContent.file | endswith("transactions/2026.journal")))' "$responses" >/dev/null
+jq -se 'any(.[]; .id == 8 and .result.isError == true)' "$responses" >/dev/null
+jq -se 'any(.[]; .id == 9 and .result.structuredContent.transactions == 2 and (.result.structuredContent.files | length) == 5)' "$responses" >/dev/null
+jq -se 'any(.[]; .id == 10 and .result.structuredContent.rows[0].balance == "INR 1500")' "$responses" >/dev/null
 grep -q '^account assets:bank:checking  ; type: A$' "$workspace/accounts.journal"
 grep -q '^2025-12-31 Prior year groceries$' "$workspace/transactions/2025.journal"
 grep -q '^2026-11-12 Groceries$' "$workspace/transactions/2026.journal"

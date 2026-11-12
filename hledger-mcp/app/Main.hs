@@ -40,7 +40,7 @@ import System.IO
 
 serverName, serverVersion, modernProtocol :: Text
 serverName = "hledger-mcp"
-serverVersion = "0.1.0"
+serverVersion = "0.1.1"
 modernProtocol = "2026-07-28"
 
 journalReader :: Reader IO
